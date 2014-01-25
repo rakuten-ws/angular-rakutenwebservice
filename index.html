@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>RWS Sample</title>
+  <link href="./bootstrap-3.0.3/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    .container {
+      padding-top: 70px;
+    }
+  </style>
+</head>
+<body>
+<div ng-app="rwsSampleApp">
+  <div class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+    <div class="controller">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Rakuten API Sample Application</a>
+      </div>
+    </div>
+  </div>
+  <div class="container" ng-controller="itemsCntl">
+    <form class="form-inline" role="form" ng-submit="submit(keyword)">
+      <div class="form-group">
+        <input type="text" id="search" name="search" ng-model="keyword" placeholder="キーワード" required/>
+      </div>
+      <button type="submit" class="btn btn-default">検索</button>
+    </form>
+    <div ng-if="koboItems.hits == 0">Not found</div>
+    <ul class="pager" ng-if="koboItems.hits > 0">
+      <li ng-class="{disabled: koboItems.page <= 1}"><a ng-click="previousPage()">前へ</a></li>
+      <li>
+        {{ koboItems.count }} 件見つかりました
+        {{ koboItems.pageCount }} ページ中 {{ koboItems.page }}ページ目
+      </li>
+      <li ng-class="{disabled: koboItems.page >= koboItems.pageCount}"><a ng-click="nextPage()">次へ</a></li>
+    </ul>
+
+    <div ng-repeat="itemInfo in koboItems.Items" ng-init="item = itemInfo.Item">
+      <div>
+        <div>
+          <img ng-src="{{ item.largeImageUrl }}"/>
+        </div>
+        <div>
+          <a href="{{ item.affiliateUrl }}" target="_blank">{{ item.title }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="./jquery-1.10.2.min.js"></script>
+<script src="./bootstrap-3.0.3/js/bootstrap.min.js"></script>
+<script src="./angular-1.2.9/angular.min.js"></script>
+<script src="./angular-1.2.9/angular-resource.min.js"></script>
+<script src="./angular-rakutenwebservice.js"></script>
+<script>
+  var app = angular.module('rwsSampleApp', ['RakutenService']);
+
+  app.config(['RakutenServiceConfig', function (rwsConfig) {
+    // it's sample developers ID :)
+    // UPDATE these parameters.
+    rwsConfig.applicationId = "1025899060325418115";
+    rwsConfig.affiliateId = "0dd78f8a.26c4c8c0.0dd78f8b.0ee811d2";
+  }]);
+
+  app.controller('itemsCntl', ['$scope', 'KoboBooks',
+    function ($scope, KoboBooks) {
+      $scope.submit = function (keyword) {
+        $scope.koboItems = KoboBooks.get({keyword: keyword});
+        $scope.currentKeyword = keyword;
+      };
+
+      var changePage = function (page) {
+        $scope.koboItems = KoboBooks.get({
+          keyword: $scope.currentKeyword,
+          page: page
+        });
+      }
+
+      $scope.nextPage = function () {
+        if ($scope.koboItems.page >= $scope.koboItems.pageCount) return;
+        changePage($scope.koboItems.page + 1);
+      };
+
+      $scope.previousPage = function () {
+        if ($scope.koboItems.page <= 1) return;
+        changePage($scope.koboItems.page - 1);
+      };
+    }
+  ]);
+</script>
+</body>
+</html>
