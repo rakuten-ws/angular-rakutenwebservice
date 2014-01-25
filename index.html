@@ -42,16 +42,20 @@
       <li ng-class="{disabled: koboItems.page >= koboItems.pageCount}"><a ng-click="nextPage()">次へ</a></li>
     </ul>
 
-    <div ng-repeat="itemInfo in koboItems.Items" ng-init="item = itemInfo.Item">
-      <div>
+    <div ng-repeat="row in itemRow" class="row">
+      <div class="col-md-4" ng-repeat="itemInfo in row" ng-init="item = itemInfo.Item">
         <div>
-          <img ng-src="{{ item.largeImageUrl }}"/>
+          <a href="{{ item.affiliateUrl }}" target="_blank">
+            <img ng-src="{{ item.largeImageUrl }}"/>
+          </a>
         </div>
         <div>
           <a href="{{ item.affiliateUrl }}" target="_blank">{{ item.title }}</a>
+          {{ item.itemPrice }}円
         </div>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -72,8 +76,29 @@
 
   app.controller('itemsCntl', ['$scope', 'KoboBooks',
     function ($scope, KoboBooks) {
+      var row = function (items) {
+        var result = [];
+        var size = 3;
+        var rowData;
+        for (var i = 0; i < items.length; i++) {
+          if (0 === (i % size)) {
+            rowData = [];
+          }
+          rowData.push(items[i]);
+          if (rowData.length === 3 || items.length - 1 === i) {
+            result.push(rowData);
+          }
+        }
+
+        return result;
+      };
+
       $scope.submit = function (keyword) {
-        $scope.koboItems = KoboBooks.get({keyword: keyword});
+        KoboBooks.get({keyword: keyword}, function (koboItems) {
+          $scope.koboItems = koboItems;
+          $scope.itemRow = row(koboItems.Items);
+
+        });
         $scope.currentKeyword = keyword;
       };
 
@@ -81,6 +106,8 @@
         $scope.koboItems = KoboBooks.get({
           keyword: $scope.currentKeyword,
           page: page
+        }, function(koboItems) {
+          $scope.itemRow = row(koboItems.Items);
         });
       }
 
